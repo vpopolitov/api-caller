@@ -10,7 +10,12 @@ module ApiCaller
       def fetch_route(route_name, params = {})
         route = routes[route_name]
         raise ApiCaller::Error::MissingRoute, route_name unless route
+        route.process(params)
         route
+      end
+
+      def configure(&block)
+        class_eval &block if block_given?
       end
 
       private
