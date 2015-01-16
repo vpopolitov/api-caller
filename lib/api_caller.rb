@@ -4,6 +4,7 @@ require 'api_caller/version'
 require 'api_caller/error'
 require 'api_caller/adapter'
 require 'api_caller/route'
+require 'api_caller/request'
 
 module ApiCaller
   class << self
@@ -16,7 +17,8 @@ module ApiCaller
       adapter = adapters[adapter_name]
       raise ApiCaller::Error::MissingAdapter unless adapter
 
-      route = adapter.fetch_route(route_name, params)
+      request = adapter.build_request(route_name, params)
+      request
 
       # base_url = 'https://api.stackexchange.com/2.2/'
       # reference = 'badges/222?order=desc&sort=rank&site=stackoverflow'
