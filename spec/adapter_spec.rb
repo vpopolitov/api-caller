@@ -14,18 +14,18 @@ describe ApiCaller::Adapter do
     end
 
     context 'when route is registered without alias' do
-      it { expect{ described_class.get 'url_pattern' }.to raise_error(ApiCaller::Error::MissingRouteName) }
+      it { expect{ described_class.get 'url_template' }.to raise_error(ApiCaller::Error::MissingRouteName) }
     end
 
     context 'when route is registered as get verb' do
       let(:params) do
         { first: :first, second: :second, last: :last }
       end
-      let(:url_pattern) { 'http://example.com/:first?last=:last&third=:third' }
+      let(:url_template) { 'http://example.com/{first}{?last,third}' }
       let(:request) { described_class.build_request(:test_route, params) }
 
       before do
-        described_class.get url_pattern, as: :test_route
+        described_class.get url_template, as: :test_route
       end
 
       it 'returns proper HTTP verb' do
@@ -33,18 +33,7 @@ describe ApiCaller::Adapter do
         expect(request.http_verb).to eq(:get)
       end
 
-      describe 'properly substitute url pattern parameters' do
-        context 'when value for resource parameters does not provided' do
-          let(:params) do
-            { second: :second, last: :last }
-          end
-
-          specify 'fetch raises an error' do
-            expect { described_class.build_request(:test_route, params) }.
-                to raise_error(ApiCaller::Error::MissingResourceParameterValue)
-          end
-        end
-
+      describe 'properly substitute url template parameters' do
         context 'when appropriate value does not provided' do
           let(:params) do
             { first: :first, last: :last }
@@ -97,16 +86,16 @@ describe ApiCaller::Adapter do
     let(:request) { described_class.build_request(:test_route, { }) }
 
     before do
-      described_class.get 'url_pattern', as: :test_route
+      described_class.get 'url_template', as: :test_route
     end
 
     context 'when get changed' do
       before do
-        described_class.configure { get 'new_url_pattern', as: :test_route }
+        described_class.configure { get 'new_url_template', as: :test_route }
       end
 
       it 'changes preset url value of route' do
-        expect(request.url).to eq('new_url_pattern')
+        expect(request.url).to eq('new_url_template')
       end
     end
 
@@ -116,7 +105,7 @@ describe ApiCaller::Adapter do
       end
 
       it 'changes preset url value of route' do
-        expect(request.url).to eq('http://example.com/url_pattern')
+        expect(request.url).to eq('http://example.com/url_template')
       end
     end
   end
@@ -126,11 +115,11 @@ describe ApiCaller::Adapter do
 
     before do
       described_class.use_base_url 'http://example.com'
-      described_class.get 'url_pattern', as: :test_route
+      described_class.get 'url_template', as: :test_route
     end
 
     it 'sets right value of url' do
-      expect(request.url).to eq('http://example.com/url_pattern')
+      expect(request.url).to eq('http://example.com/url_template')
     end
   end
 end

@@ -1,10 +1,15 @@
+require 'addressable/uri'
+require 'addressable/template'
 require 'faraday'
 require 'facets/string/snakecase'
-require 'api_caller/version'
-require 'api_caller/error'
+require 'api_caller/extensions/enumerable'
+require 'api_caller/extensions/struct'
 require 'api_caller/adapter'
+require 'api_caller/context'
+require 'api_caller/error'
 require 'api_caller/route'
 require 'api_caller/request'
+require 'api_caller/version'
 
 module ApiCaller
   class << self

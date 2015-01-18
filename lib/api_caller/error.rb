@@ -11,8 +11,5 @@ module ApiCaller
 
     class MissingRouteName < CallerError
     end
-
-    class MissingResourceParameterValue < CallerError
-    end
   end
 end

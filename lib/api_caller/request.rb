@@ -1,11 +1,13 @@
 module ApiCaller
-  class Request
-    attr_reader :http_verb, :url, :body
+  Request = Struct.hash_initialized :http_verb, :url, :body, :headers
 
-    def initialize(http_verb, url, body = {})
-      @http_verb = http_verb
-      @url = url
-      @body = body
-    end
-  end
+  # class Request
+    # attr_reader :http_verb, :url, :body
+
+    # def initialize(context)
+    #   @http_verb = http_verb
+    #   @url = url
+    #   @body = body
+    # end
+  # end
 end

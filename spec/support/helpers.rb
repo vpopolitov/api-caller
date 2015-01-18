@@ -1,3 +1,3 @@
 class TestAdapter < ApiCaller::Adapter
-  get 'url_pattern', as: :test_route
+  get 'url_template', as: :test_route
 end

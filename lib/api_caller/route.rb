@@ -1,44 +1,26 @@
 module ApiCaller
   class Route
-    attr_reader :pattern, :http_verb
+    attr_reader :template, :http_verb
 
     def initialize(params)
-      @pattern = params[:pattern]
+      @template = params[:template]
       @http_verb  = params[:http_verb]
     end
 
-    def process_route(route, context = {})
+    def build_url!(context = {})
       params  = context[:params]
       base_url = context[:base_url]
 
-      pattern = route.pattern
-      url = pattern.gsub(url_pattern) do
-        val = $~[:val].to_sym
-        key = $~[:key]
-        sep = $~[:sep]
-        query_param = params.delete val
+      route_template = Addressable::Template.new(template)
+      url = route_template.expand(params)
+      full_url = Addressable::URI.join(base_url, url).to_s
 
-        if key
-          if query_param
-            "#{sep}#{key}=#{query_param}"
-          else
-            ''
-          end
-        else
-          if query_param
-            query_param
-          else
-            raise ApiCaller::Error::MissingResourceParameterValue, val
-          end
-        end
-      end
-      base_url.empty? ? url : "#{base_url}/#{url}"
-    end
+      excluded_params_keys = params.keys.to_symbol_arr - route_template.variables.to_symbol_arr
+      # TODO:: change :post, :put to constants
+      body = {}
+      body = params.select { |k, _| excluded_params_keys.include? k } if [:post, :put].include? @http_verb
 
-    private
-
-    def url_pattern
-      /(?<sep>&)?((?<key>\w+)=)?:(?<val>\w+)/
+      context.http_verb, context.url, context.body = http_verb, full_url, body
     end
   end
 end
