@@ -1,3 +1,3 @@
 module ApiCaller
-  Context = Struct.hash_initialized :http_verb, :base_url, :url, :params, :body, :headers
+  Context = Struct.hash_initialized :base_url, :raw_params
 end

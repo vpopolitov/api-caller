@@ -7,9 +7,9 @@ module ApiCaller
       @http_verb  = params[:http_verb]
     end
 
-    def build_url!(context = {})
-      params  = context[:params]
-      base_url = context[:base_url]
+    def build_request(context)
+      params  = context.raw_params
+      base_url = context.base_url
 
       route_template = Addressable::Template.new(template)
       url = route_template.expand(params)
@@ -20,7 +20,7 @@ module ApiCaller
       body = {}
       body = params.select { |k, _| excluded_params_keys.include? k } if [:post, :put].include? @http_verb
 
-      context.http_verb, context.url, context.body = http_verb, full_url, body
+      ApiCaller::Request.new http_verb: http_verb, url: full_url, body: body
     end
   end
 end

@@ -15,9 +15,9 @@ module ApiCaller
         route = routes[route_name]
         raise ApiCaller::Error::MissingRoute, route_name unless route
 
-        context = ApiCaller::Context.new(base_url: base_url, params: params)
-        route.build_url!(context)
-        ApiCaller::Request.new(context.to_h)
+        context = ApiCaller::Context.new(base_url: base_url, raw_params: params)
+        request = route.build_request(context)
+        request
       end
 
       def configure(&block)
