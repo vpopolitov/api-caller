@@ -14,7 +14,7 @@ module ApiCaller
       def build_request(route_name, params = {})
         route = routes[route_name]
         raise ApiCaller::Error::MissingRoute, route_name unless route
-        url = process_route(route, params)
+        url = route.process_route(route, { base_url: base_url, params: params })
         Request.new(route.http_verb, url)
       end
 
@@ -30,35 +30,6 @@ module ApiCaller
 
       def base_url
         @base_url ||= ''
-      end
-
-      def url_pattern
-        /(?<sep>&)?((?<key>\w+)=)?:(?<val>\w+)/
-      end
-
-      def process_route(route, params = {})
-        pattern = route.pattern
-        url = pattern.gsub(url_pattern) do
-          val = $~[:val].to_sym
-          key = $~[:key]
-          sep = $~[:sep]
-          query_param = params.delete val
-
-          if key
-            if query_param
-              "#{sep}#{key}=#{query_param}"
-            else
-              ''
-            end
-          else
-            if query_param
-              query_param
-            else
-              raise ApiCaller::Error::MissingResourceParameterValue, val
-            end
-          end
-        end
-        base_url.empty? ? url : "#{base_url}/#{url}"
       end
     end
   end
