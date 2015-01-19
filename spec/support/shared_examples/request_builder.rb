@@ -14,11 +14,11 @@ RSpec.shared_examples 'a request builder' do
         { first: :first, last: :last }
       end
 
-      specify 'skip query parameter' do
+      it 'skip query parameter' do
         expect(request.url).to eq('http://example.com/first?last=last')
       end
 
-      specify 'body returns empty collection' do
+      it 'returns empty collection as a body' do
         expect(request.body).to eq({})
       end
     end
@@ -28,11 +28,11 @@ RSpec.shared_examples 'a request builder' do
         { first: :first, second: :second, last: :last }
       end
 
-      specify 'returns well-formed url' do
+      it 'returns well-formed url' do
         expect(request.url).to eq('http://example.com/first?last=last')
       end
 
-      specify 'body returns empty collection' do
+      it 'returns empty collection as a body' do
         expect(request.body).to eq({})
       end
     end
@@ -42,11 +42,11 @@ RSpec.shared_examples 'a request builder' do
         { first: :first, last: :last }
       end
 
-      specify 'returns well-formed url' do
+      it 'returns well-formed url' do
         expect(request.url).to eq('http://example.com/first?last=last')
       end
 
-      specify 'body returns empty collection' do
+      it 'returns empty collection as a body' do
         expect(request.body).to eq({})
       end
     end

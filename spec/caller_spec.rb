@@ -44,6 +44,8 @@ describe ApiCaller do
           specify 'call must be made via query alias' do
             expect { described_class.call adapter_alias, test_route }.to_not raise_error
           end
+
+
         end
       end
     end
