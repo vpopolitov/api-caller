@@ -13,6 +13,8 @@ require 'api_caller/version'
 
 module ApiCaller
   class << self
+    attr_writer :http_adapter
+
     def register(adapter_klass, params = {})
       adapter_alias = params.fetch(:as, adapter_klass.to_s.snakecase.intern)
       adapters[adapter_alias] = adapter_klass
@@ -23,29 +25,25 @@ module ApiCaller
       raise ApiCaller::Error::MissingAdapter unless adapter
 
       request = adapter.build_request(route_name, params)
-      request
+      res = @http_adapter.send(request.http_verb, request.url) do |_|
+        # TODO:: post, put
+        #req.params[:q] = 'London,ca'
+      end
 
-      # base_url = 'https://api.stackexchange.com/2.2/'
-      # reference = 'badges/222?order=desc&sort=rank&site=stackoverflow'
-      # url = "#{base_url}#{reference}"
-      #
-      # conn = Faraday.new url: url do |builder|
-      #   builder.response :logger
-      #   builder.adapter Faraday.default_adapter
-      # end
-      #
-      # res = conn.get do |req|
-      #   req.params[:q] = 'London,ca'
-      # end
-      #
-      # res
-
+      res
     end
 
     private
 
     def adapters
       @adapters ||= {}
+    end
+
+    def http_adapter
+      @http_adapter ||= Faraday.new do |builder|
+        builder.response :logger
+        builder.adapter Faraday.default_adapter
+      end
     end
   end
 end
