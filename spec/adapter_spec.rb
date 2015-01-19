@@ -18,9 +18,6 @@ describe ApiCaller::Adapter do
     end
 
     context 'when route is registered as get verb' do
-      let(:params) do
-        { first: :first, second: :second, last: :last }
-      end
       let(:url_template) { 'http://example.com/{first}{?last,third}' }
       let(:request) { described_class.build_request(:test_route, params) }
 
@@ -28,54 +25,7 @@ describe ApiCaller::Adapter do
         described_class.get url_template, as: :test_route
       end
 
-      it 'returns proper HTTP verb' do
-        # TODO:: extract verbs to constant
-        expect(request.http_verb).to eq(:get)
-      end
-
-      describe 'properly substitute url template parameters' do
-        context 'when appropriate value does not provided' do
-          let(:params) do
-            { first: :first, last: :last }
-          end
-
-          specify 'skip query parameter' do
-            expect(request.url).to eq('http://example.com/first?last=last')
-          end
-
-          specify 'body returns empty collection' do
-            expect(request.body).to eq({})
-          end
-        end
-
-        context 'when exceeded parameters are presented' do
-          let(:params) do
-            { first: :first, second: :second, last: :last }
-          end
-
-          specify 'returns well-formed url' do
-            expect(request.url).to eq('http://example.com/first?last=last')
-          end
-
-          specify 'body returns empty collection' do
-            expect(request.body).to eq({})
-          end
-        end
-
-        context 'when all parameters are presented' do
-          let(:params) do
-            { first: :first, last: :last }
-          end
-
-          specify 'returns well-formed url' do
-            expect(request.url).to eq('http://example.com/first?last=last')
-          end
-
-          specify 'body returns empty collection' do
-            expect(request.body).to eq({})
-          end
-        end
-      end
+      it_behaves_like 'a request builder'
     end
 
     # context 'when route is registered as post verb' do
