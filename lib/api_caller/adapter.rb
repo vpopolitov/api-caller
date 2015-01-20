@@ -1,6 +1,14 @@
 module ApiCaller
   class Adapter
     class << self
+      def decorate(route_name = :all, with: ApiCaller::Decorator)
+        decorators << with.new(route_name)
+      end
+
+      def remove_decorator
+        decorators.clear
+      end
+
       def use_base_url(url)
         @base_url = url
       end
@@ -15,9 +23,9 @@ module ApiCaller
         route = routes[route_name]
         raise ApiCaller::Error::MissingRoute, route_name unless route
 
+        params = decorators.inject(params) { |req, decorator| decorator.execute(req, route_name) }
         context = ApiCaller::Context.new(base_url: base_url, raw_params: params)
-        request = route.build_request(context)
-        request
+        route.build_request(context)
       end
 
       def configure(&block)
@@ -32,6 +40,10 @@ module ApiCaller
 
       def base_url
         @base_url ||= ''
+      end
+
+      def decorators
+        @decorators ||= []
       end
     end
   end
