@@ -49,6 +49,37 @@ describe ApiCaller::Adapter do
           expect(request.url).to eq('http://example.com/first?last=last')
         end
       end
+
+      context 'when several request decorators registered' do
+        let(:params) { { } }
+
+        let(:fake_decorator_one) do
+          Class.new(ApiCaller::Decorator) do
+            def wrap(request)
+              request.merge!({ first: 'first' })
+            end
+          end
+        end
+
+        let(:fake_decorator_two) do
+          Class.new(ApiCaller::Decorator) do
+            def wrap(request)
+              request.merge!({ last: 'last' })
+            end
+          end
+        end
+
+        around do |example|
+          described_class.decorate with: fake_decorator_one
+          described_class.decorate with: fake_decorator_two
+          example.run
+          described_class.remove_decorator
+        end
+
+        specify 'all of them are called' do
+          expect(request.url).to eq('http://example.com/first?last=last')
+        end
+      end
     end
 
     # context 'when route is registered as post verb' do
