@@ -1,4 +1,4 @@
-describe ApiCaller::Adapter do
+describe ApiCaller::Service do
   subject { described_class }
 
   it { is_expected.to respond_to(:get) }
@@ -7,7 +7,10 @@ describe ApiCaller::Adapter do
   it { is_expected.to respond_to(:build_request) }
   it { is_expected.to respond_to(:configure) }
   it { is_expected.to respond_to(:use_base_url) }
-  it { is_expected.to respond_to(:decorate) }
+  it { is_expected.to respond_to(:decorate_request) }
+  it { is_expected.to respond_to(:remove_request_decorators) }
+  it { is_expected.to respond_to(:decorate_response) }
+  it { is_expected.to respond_to(:remove_response_decorators) }
 
   describe '::build_request' do
     specify 'when route does not registered' do
@@ -31,7 +34,7 @@ describe ApiCaller::Adapter do
       context 'when a request decorator registered' do
         let(:params) { { first: 'first' } }
 
-        let(:fake_decorator) do
+        let(:fake_req_decorator) do
           Class.new(ApiCaller::Decorator) do
             def wrap(request)
               request.merge!({ last: 'last' })
@@ -40,9 +43,9 @@ describe ApiCaller::Adapter do
         end
 
         around do |example|
-          described_class.decorate with: fake_decorator
+          described_class.decorate_request with: fake_req_decorator
           example.run
-          described_class.remove_decorator
+          described_class.remove_request_decorators
         end
 
         it 'returns decorated result' do
@@ -53,7 +56,7 @@ describe ApiCaller::Adapter do
       context 'when several request decorators registered' do
         let(:params) { { } }
 
-        let(:fake_decorator_one) do
+        let(:fake_req_decorator_one) do
           Class.new(ApiCaller::Decorator) do
             def wrap(request)
               request.merge!({ first: 'first' })
@@ -61,7 +64,7 @@ describe ApiCaller::Adapter do
           end
         end
 
-        let(:fake_decorator_two) do
+        let(:fake_req_decorator_two) do
           Class.new(ApiCaller::Decorator) do
             def wrap(request)
               request.merge!({ last: 'last' })
@@ -70,13 +73,35 @@ describe ApiCaller::Adapter do
         end
 
         around do |example|
-          described_class.decorate with: fake_decorator_one
-          described_class.decorate with: fake_decorator_two
+          described_class.decorate_request with: fake_req_decorator_one
+          described_class.decorate_request with: fake_req_decorator_two
           example.run
-          described_class.remove_decorator
+          described_class.remove_request_decorators
         end
 
         specify 'all of them are called' do
+          expect(request.url).to eq('http://example.com/first?last=last')
+        end
+      end
+
+      context 'when a response decorator registered' do
+        let(:params) { { first: 'first', last: 'last' } }
+
+        let(:fake_decorator) do
+          Class.new(ApiCaller::Decorator) do
+            def wrap(response)
+              response
+            end
+          end
+        end
+
+        around do |example|
+          described_class.decorate_request with: fake_decorator
+          example.run
+          described_class.remove_request_decorators
+        end
+
+        it 'returns decorated result' do
           expect(request.url).to eq('http://example.com/first?last=last')
         end
       end
@@ -131,7 +156,7 @@ describe ApiCaller::Adapter do
     context 'when called with :all symbol' do
       it 'calls decorator ctor with right arguments' do
         expect(ApiCaller::Decorator).to receive(:new).with(:all)
-        described_class.decorate :all
+        described_class.decorate_request :all
       end
     end
 
@@ -140,21 +165,92 @@ describe ApiCaller::Adapter do
 
       it 'calls decorator ctor with right arguments' do
         expect(ApiCaller::Decorator).to receive(:new).with(route_name)
-        described_class.decorate route_name
+        described_class.decorate_request route_name
       end
     end
   end
 
-  describe '::remove_decorator' do
+  describe '::remove_request_decorators' do
     before do
       @arr = []
-      allow(ApiCaller::Adapter).to receive(:decorators).and_return(@arr)
-      described_class.decorate :route_name
-      described_class.remove_decorator
+      allow(ApiCaller::Service).to receive(:request_decorators).and_return(@arr)
+      described_class.decorate_request :route_name
+      described_class.remove_request_decorators
     end
 
     it 'removes specified decorator from registered ones' do
       expect(@arr.size).to eq 0
+    end
+  end
+
+  describe 'http adapter' do
+    let(:mock_http_adapters) do
+      3.times.map do
+        http_adapter = double('mock_http_adapter')
+        allow(http_adapter).to receive(:send)
+        http_adapter
+      end
+    end
+
+    let(:request) { ApiCaller::Request.new(http_verb: '', url: '') }
+
+    context 'when adapter registered for caller' do
+      before do
+        ApiCaller.use_http_adapter nil
+        described_class.use_http_adapter nil
+
+        ApiCaller.use_http_adapter mock_http_adapters[0]
+      end
+
+      after do
+        ApiCaller.use_http_adapter nil
+        described_class.use_http_adapter nil
+      end
+
+      specify "call go through caller's adapter" do
+        expect(mock_http_adapters[0]).to receive(:send)
+        described_class.build_response request
+      end
+    end
+
+    context 'when adapter registered for caller and for service' do
+      before do
+        ApiCaller.use_http_adapter nil
+        described_class.use_http_adapter nil
+
+        ApiCaller.use_http_adapter mock_http_adapters[0]
+        described_class.use_http_adapter mock_http_adapters[1]
+      end
+
+      after do
+        ApiCaller.use_http_adapter nil
+        described_class.use_http_adapter nil
+      end
+
+      specify "call go through service's adapter" do
+        expect(mock_http_adapters[1]).to receive(:send).once
+        described_class.build_response request
+      end
+    end
+
+    context 'when adapter registered for caller, service and pass as a parameter' do
+      before do
+        ApiCaller.use_http_adapter nil
+        described_class.use_http_adapter nil
+
+        ApiCaller.use_http_adapter mock_http_adapters[0]
+        described_class.use_http_adapter mock_http_adapters[1]
+      end
+
+      after do
+        ApiCaller.use_http_adapter nil
+        described_class.use_http_adapter nil
+      end
+
+      specify "call go through parameter's adapter" do
+        expect(mock_http_adapters[2]).to receive(:send).once
+        described_class.build_response request, mock_http_adapters[2]
+      end
     end
   end
 end

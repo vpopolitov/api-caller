@@ -32,11 +32,7 @@ describe ApiCaller::Decorator do
   describe '#execute' do
     context 'when result returned' do
       subject { described_class.new.execute(request, :test_route_name) }
-
-      it { is_expected.to respond_to(:http_verb) }
-      it { is_expected.to respond_to(:url) }
-      it { is_expected.to respond_to(:body) }
-      it { is_expected.to respond_to(:headers) }
+      it { is_expected.to be request }
     end
   end
 end
