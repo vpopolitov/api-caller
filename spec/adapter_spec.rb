@@ -184,72 +184,46 @@ describe ApiCaller::Service do
   end
 
   describe 'http adapter' do
-    let(:mock_http_adapters) do
-      3.times.map do
+    let(:mock_http_adapter) do
         http_adapter = double('mock_http_adapter')
         allow(http_adapter).to receive(:send)
         http_adapter
-      end
     end
 
     let(:request) { ApiCaller::Request.new(http_verb: '', url: '') }
 
+    before do
+      ApiCaller.use_http_adapter nil
+      described_class.use_http_adapter nil
+    end
+
+    after do
+      ApiCaller.use_http_adapter nil
+      described_class.use_http_adapter nil
+    end
+
     context 'when adapter registered for caller' do
-      before do
-        ApiCaller.use_http_adapter nil
-        described_class.use_http_adapter nil
-
-        ApiCaller.use_http_adapter mock_http_adapters[0]
-      end
-
-      after do
-        ApiCaller.use_http_adapter nil
-        described_class.use_http_adapter nil
-      end
+      before { ApiCaller.use_http_adapter mock_http_adapter }
 
       specify "call go through caller's adapter" do
-        expect(mock_http_adapters[0]).to receive(:send)
+        expect(mock_http_adapter).to receive(:send)
         described_class.build_response request
       end
     end
 
     context 'when adapter registered for caller and for service' do
-      before do
-        ApiCaller.use_http_adapter nil
-        described_class.use_http_adapter nil
-
-        ApiCaller.use_http_adapter mock_http_adapters[0]
-        described_class.use_http_adapter mock_http_adapters[1]
-      end
-
-      after do
-        ApiCaller.use_http_adapter nil
-        described_class.use_http_adapter nil
-      end
+      before { described_class.use_http_adapter mock_http_adapter }
 
       specify "call go through service's adapter" do
-        expect(mock_http_adapters[1]).to receive(:send).once
+        expect(mock_http_adapter).to receive(:send).once
         described_class.build_response request
       end
     end
 
     context 'when adapter registered for caller, service and pass as a parameter' do
-      before do
-        ApiCaller.use_http_adapter nil
-        described_class.use_http_adapter nil
-
-        ApiCaller.use_http_adapter mock_http_adapters[0]
-        described_class.use_http_adapter mock_http_adapters[1]
-      end
-
-      after do
-        ApiCaller.use_http_adapter nil
-        described_class.use_http_adapter nil
-      end
-
       specify "call go through parameter's adapter" do
-        expect(mock_http_adapters[2]).to receive(:send).once
-        described_class.build_response request, mock_http_adapters[2]
+        expect(mock_http_adapter).to receive(:send).once
+        described_class.build_response request, mock_http_adapter
       end
     end
   end
