@@ -46,6 +46,7 @@ module ApiCaller
           #req.params[:q] = 'London,ca'
         end
 
+        res = response_decorators.inject(res) { |res, decorator| decorator.execute(res, :foo) }
         res
       end
 

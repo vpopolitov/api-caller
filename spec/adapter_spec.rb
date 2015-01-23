@@ -5,8 +5,10 @@ describe ApiCaller::Service do
   # it { is_expected.to respond_to(:post) } ....
 
   it { is_expected.to respond_to(:build_request) }
+  it { is_expected.to respond_to(:build_response) }
   it { is_expected.to respond_to(:configure) }
   it { is_expected.to respond_to(:use_base_url) }
+  it { is_expected.to respond_to(:use_http_adapter) }
   it { is_expected.to respond_to(:decorate_request) }
   it { is_expected.to respond_to(:remove_request_decorators) }
   it { is_expected.to respond_to(:decorate_response) }
@@ -84,31 +86,89 @@ describe ApiCaller::Service do
         end
       end
 
-      context 'when a response decorator registered' do
-        let(:params) { { first: 'first', last: 'last' } }
-
-        let(:fake_decorator) do
-          Class.new(ApiCaller::Decorator) do
-            def wrap(response)
-              response
-            end
-          end
-        end
-
-        around do |example|
-          described_class.decorate_request with: fake_decorator
-          example.run
-          described_class.remove_request_decorators
-        end
-
-        it 'returns decorated result' do
-          expect(request.url).to eq('http://example.com/first?last=last')
-        end
+      context 'when several request decorators registered with different route names' do
+        specify 'registered for given route should be called'
+        specify 'registered with :all symbol should be called'
       end
     end
 
     # context 'when route is registered as post verb' do
     # it 'returns set of parameters which has not been passed to url' do
+  end
+
+  describe '::build_response' do
+    let(:request) { ApiCaller::Request.new(http_verb: '', url: '') }
+    let(:response) { :response }
+    let(:decorated_response)  { { body: response } }
+    let(:decorated_response2) { { doc: decorated_response } }
+
+    let(:http_adapter) do
+      http_adapter = double('http_adapter')
+      allow(http_adapter).to receive(:send).and_return(response)
+      http_adapter
+    end
+
+    context 'when a response decorator registered' do
+      let(:fake_res_decorator) do
+        Class.new(ApiCaller::Decorator) do
+          def wrap(response)
+            { body: response }
+          end
+        end
+      end
+
+      before do
+        described_class.use_http_adapter http_adapter
+        described_class.decorate_response with: fake_res_decorator
+      end
+
+      after do
+        described_class.remove_response_decorators
+        described_class.use_http_adapter nil
+      end
+
+      it 'returns decorated result' do
+        expect(described_class.build_response request).to eq(decorated_response)
+      end
+    end
+
+    context 'when several response decorators registered' do
+      let(:fake_res_decorator_one) do
+        Class.new(ApiCaller::Decorator) do
+          def wrap(response)
+            { body: response }
+          end
+        end
+      end
+
+      let(:fake_res_decorator_two) do
+        Class.new(ApiCaller::Decorator) do
+          def wrap(response)
+            { doc: response }
+          end
+        end
+      end
+
+      before do
+        described_class.use_http_adapter http_adapter
+        described_class.decorate_response with: fake_res_decorator_one
+        described_class.decorate_response with: fake_res_decorator_two
+      end
+
+      after do
+        described_class.remove_response_decorators
+        described_class.use_http_adapter nil
+      end
+
+      specify 'all of them are called' do
+        expect(described_class.build_response request).to eq(decorated_response2)
+      end
+    end
+
+    context 'when several response decorators registered with different route names' do
+      specify 'registered for given route should be called'
+      specify 'registered with :all symbol should be called'
+    end
   end
 
   describe '::configure' do
