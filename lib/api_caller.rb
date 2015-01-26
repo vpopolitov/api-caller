@@ -4,12 +4,13 @@ require 'faraday'
 require 'facets/string/snakecase'
 require 'api_caller/extensions/enumerable'
 require 'api_caller/extensions/struct'
-require 'api_caller/service'
+require 'api_caller/client'
 require 'api_caller/context'
 require 'api_caller/decorator'
 require 'api_caller/error'
 require 'api_caller/route'
 require 'api_caller/request'
+require 'api_caller/service'
 require 'api_caller/version'
 
 module ApiCaller
@@ -25,8 +26,7 @@ module ApiCaller
       service = services[service_name]
       raise ApiCaller::Error::MissingService unless service
 
-      request = service.build_request(route_name, params)
-      response = service.build_response(request)
+      response = service.call(route_name, params)
       response
     end
 

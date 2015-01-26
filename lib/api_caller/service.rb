@@ -31,22 +31,16 @@ module ApiCaller
         routes[route_name] = Route.new template: url_template, http_verb: :get
       end
 
-      def build_request(route_name, params = {})
+      def call(route_name, params = {}, message_http_adapter = nil)
         route = routes[route_name]
         raise ApiCaller::Error::MissingRoute, route_name unless route
 
         params = request_decorators.inject(params) { |req, decorator| decorator.execute(req, route_name) }
         context = ApiCaller::Context.new(base_url: base_url, raw_params: params)
-        route.build_request(context)
-      end
+        req = route.build_request(context)
 
-      def build_response(request, message_http_adapter = nil)
-        res = (message_http_adapter || http_adapter).send(request.http_verb, request.url) do |_|
-          # TODO:: post, put
-          #req.params[:q] = 'London,ca'
-        end
-
-        res = response_decorators.inject(res) { |res, decorator| decorator.execute(res, :foo) }
+        res = ApiCaller::Client.new(message_http_adapter || http_adapter).build_response(req)
+        res = response_decorators.inject(res) { |res, decorator| decorator.execute(res, route_name) }
         res
       end
 
