@@ -3,7 +3,7 @@ module ApiCaller
     class CallerError < StandardError
     end
 
-    class MissingAdapter < CallerError
+    class MissingService < CallerError
     end
 
     class MissingRoute < CallerError

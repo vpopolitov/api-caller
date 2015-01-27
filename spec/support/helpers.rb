@@ -1,4 +1,4 @@
-class TestAdapter < ApiCaller::Adapter
+class TestService < ApiCaller::Service
   #get 'url_template', as: :test_route
 
   use_base_url 'https://api.stackexchange.com/2.2/'
