@@ -5,16 +5,16 @@ module ApiCaller
         request_decorators << with.new(route_name)
       end
 
-      def remove_request_decorators
-        request_decorators.clear
+      def remove_request_decorators(route_name = :all)
+        request_decorators.delete_if { |d| [d.route_name, :all].include? route_name }
       end
 
       def decorate_response(route_name = :all, with: ApiCaller::Decorator)
         response_decorators << with.new(route_name)
       end
 
-      def remove_response_decorators
-        response_decorators.clear
+      def remove_response_decorators(route_name = :all)
+        response_decorators.delete_if { |d| [d.route_name, :all].include? route_name }
       end
 
       def use_base_url(url)

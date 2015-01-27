@@ -224,7 +224,7 @@ describe ApiCaller::Service do
       after { described_class.remove_request_decorators }
 
       it 'calls decorator ctor with right arguments' do
-        expect(ApiCaller::Decorator).to receive(:new).with(:all)
+        expect(ApiCaller::Decorator).to receive(:new).with(:all).and_call_original
         described_class.decorate_request :all
       end
     end
@@ -235,22 +235,93 @@ describe ApiCaller::Service do
       after { described_class.remove_request_decorators }
 
       it 'calls decorator ctor with right arguments' do
-        expect(ApiCaller::Decorator).to receive(:new).with(route_name)
+        expect(ApiCaller::Decorator).to receive(:new).with(route_name).and_call_original
         described_class.decorate_request route_name
       end
     end
   end
 
   describe '::remove_request_decorators' do
-    before do
-      @arr = []
-      allow(ApiCaller::Service).to receive(:request_decorators).and_return(@arr)
-      described_class.decorate_request :route_name
-      described_class.remove_request_decorators
+    context 'with default parameter' do
+      before do
+        @arr = []
+        allow(ApiCaller::Service).to receive(:request_decorators).and_return(@arr)
+        described_class.decorate_request :route_name_one
+        described_class.decorate_request :route_name_two
+        described_class.remove_request_decorators
+      end
+
+      it 'removes all decorators from registered ones' do
+        expect(@arr.size).to eq 0
+      end
     end
 
-    it 'removes specified decorator from registered ones' do
-      expect(@arr.size).to eq 0
+    context 'with passed parameter' do
+      before do
+        @arr = []
+        allow(ApiCaller::Service).to receive(:request_decorators).and_return(@arr)
+        described_class.decorate_request :route_name_one
+        described_class.decorate_request :route_name_two
+        described_class.remove_request_decorators :route_name_one
+      end
+
+      it 'removes specified decorator from registered ones' do
+        expect(@arr.size).to eq 1
+        expect(@arr[0].route_name).to eq :route_name_two
+      end
+    end
+  end
+
+  describe '::decorate_response' do
+    context 'when called with :all symbol' do
+      after { described_class.remove_response_decorators }
+
+      it 'calls decorator ctor with right arguments' do
+        expect(ApiCaller::Decorator).to receive(:new).with(:all).and_call_original
+        described_class.decorate_response :all
+      end
+    end
+
+    context 'when called for given route name' do
+      let(:route_name) { :test_route_name }
+
+      after { described_class.remove_response_decorators }
+
+      it 'calls decorator ctor with right arguments' do
+        expect(ApiCaller::Decorator).to receive(:new).with(route_name).and_call_original
+        described_class.decorate_response route_name
+      end
+    end
+  end
+
+  describe '::remove_response_decorators' do
+    context 'with default parameter' do
+      before do
+        @arr = []
+        allow(ApiCaller::Service).to receive(:response_decorators).and_return(@arr)
+        described_class.decorate_response :route_name_one
+        described_class.decorate_response :route_name_two
+        described_class.remove_response_decorators
+      end
+
+      it 'removes all decorators from registered ones' do
+        expect(@arr.size).to eq 0
+      end
+    end
+
+    context 'with passed parameter' do
+      before do
+        @arr = []
+        allow(ApiCaller::Service).to receive(:response_decorators).and_return(@arr)
+        described_class.decorate_response :route_name_one
+        described_class.decorate_response :route_name_two
+        described_class.remove_response_decorators :route_name_one
+      end
+
+      it 'removes specified decorator from registered ones' do
+        expect(@arr.size).to eq 1
+        expect(@arr[0].route_name).to eq :route_name_two
+      end
     end
   end
 

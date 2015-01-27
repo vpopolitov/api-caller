@@ -1,6 +1,7 @@
 describe ApiCaller::Decorator do
   let(:request) { ApiCaller::Request.new({}) }
 
+  it { is_expected.to respond_to(:route_name) }
   it { is_expected.to respond_to(:execute) }
 
   describe '#initialize' do

@@ -1,5 +1,7 @@
 module ApiCaller
   class Decorator
+    attr_reader :route_name
+
     def initialize(route_name = :all)
       @route_name = route_name
     end
