@@ -1,6 +1,7 @@
 describe ApiCaller do
   it { is_expected.to respond_to(:register) }
   it { is_expected.to respond_to(:call) }
+  it { is_expected.to respond_to(:use_http_adapter) }
 
   describe '::call' do
     context 'when service does not registered' do

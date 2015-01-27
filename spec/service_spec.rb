@@ -166,14 +166,18 @@ describe ApiCaller::Service do
   end
 
   describe '::configure' do
+    let(:base_url) { 'http://example.com' }
+
     before do
+      described_class.use_base_url base_url
       described_class.get 'url_template', as: :test_route
     end
 
     context 'when get changed' do
+      before { described_class.configure { get 'new_url_template', as: :test_route } }
       it 'changes preset url value of route' do
-        expect(ApiCaller::Route).to receive(:new).with(hash_including(template: 'new_url_template')).and_call_original
-        described_class.configure { get 'new_url_template', as: :test_route }
+        expect(mock_http_adapter).to receive(:send).with(:get, "#{base_url}/new_url_template")
+        described_class.call :test_route
       end
     end
 
@@ -186,8 +190,8 @@ describe ApiCaller::Service do
       end
 
       it 'changes preset url value of route' do
-        expect(ApiCaller::Context).to receive(:new).with(hash_including(base_url: new_base_url)).and_call_original
-        described_class.call(:test_route)
+        expect(mock_http_adapter).to receive(:send).with(:get, "#{new_base_url}/url_template")
+        described_class.call :test_route
       end
     end
   end
@@ -201,8 +205,8 @@ describe ApiCaller::Service do
     end
 
     it 'sets right value of url' do
-      expect(ApiCaller::Context).to receive(:new).with(hash_including(base_url: base_url)).and_call_original
-      described_class.call(:test_route)
+      expect(mock_http_adapter).to receive(:send).with(:get, "#{base_url}/url_template")
+      described_class.call :test_route
     end
   end
 

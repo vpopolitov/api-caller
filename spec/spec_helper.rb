@@ -1,6 +1,5 @@
 require 'api_caller'
 require 'support/helpers'
-require 'support/shared_examples/request_builder'
 
 RSpec.configure do |config|
   config.expect_with :rspec do |expectations|
