@@ -43,19 +43,27 @@ describe ApiCaller::Service do
       end
 
       describe 'request decorator' do
+        let(:fake_req_decorator_one) do
+          Class.new(ApiCaller::Decorator) do
+            def wrap(request)
+              request.merge!({ first: 'first' })
+            end
+          end
+        end
+
+        let(:fake_req_decorator_two) do
+          Class.new(ApiCaller::Decorator) do
+            def wrap(request)
+              request.merge!({ last: 'last' })
+            end
+          end
+        end
+
         context 'when a request decorator registered' do
           let(:params) { { first: 'first' } }
 
-          let(:fake_req_decorator) do
-            Class.new(ApiCaller::Decorator) do
-              def wrap(request)
-                request.merge!({ last: 'last' })
-              end
-            end
-          end
-
           around do |example|
-            described_class.decorate_request with: fake_req_decorator
+            described_class.decorate_request with: fake_req_decorator_two
             example.run
             described_class.remove_request_decorators
           end
@@ -69,38 +77,33 @@ describe ApiCaller::Service do
         context 'when several request decorators registered' do
           let(:params) { { } }
 
-          let(:fake_req_decorator_one) do
-            Class.new(ApiCaller::Decorator) do
-              def wrap(request)
-                request.merge!({ first: 'first' })
-              end
+          context 'with all routes' do
+            around do |example|
+              described_class.decorate_request with: fake_req_decorator_one
+              described_class.decorate_request with: fake_req_decorator_two
+              example.run
+              described_class.remove_request_decorators
+            end
+
+            specify 'all of them are called' do
+              expect(mock_http_adapter).to receive(:send).with(:get, 'http://example.com/first?last=last')
+              described_class.call(:test_route, params)
             end
           end
 
-          let(:fake_req_decorator_two) do
-            Class.new(ApiCaller::Decorator) do
-              def wrap(request)
-                request.merge!({ last: 'last' })
-              end
+          context 'with different route names' do
+            around do |example|
+              described_class.decorate_request :test_route, with: fake_req_decorator_one
+              described_class.decorate_request :fake_route, with: fake_req_decorator_two
+              example.run
+              described_class.remove_request_decorators
+            end
+
+            specify 'registered for given route should be called' do
+              expect(mock_http_adapter).to receive(:send).with(:get, 'http://example.com/first')
+              described_class.call(:test_route, params)
             end
           end
-
-          around do |example|
-            described_class.decorate_request with: fake_req_decorator_one
-            described_class.decorate_request with: fake_req_decorator_two
-            example.run
-            described_class.remove_request_decorators
-          end
-
-          specify 'all of them are called' do
-            expect(mock_http_adapter).to receive(:send).with(:get, 'http://example.com/first?last=last')
-            described_class.call(:test_route, params)
-          end
-        end
-
-        context 'when several request decorators registered with different route names' do
-          specify 'registered for given route should be called'
-          specify 'registered with :all symbol should be called'
         end
       end
 
@@ -126,11 +129,9 @@ describe ApiCaller::Service do
         end
 
         context 'when a response decorator registered' do
-          before do
+          around do |example|
             described_class.decorate_response with: fake_res_decorator
-          end
-
-          after do
+            example.run
             described_class.remove_response_decorators
           end
 
@@ -140,23 +141,31 @@ describe ApiCaller::Service do
         end
 
         context 'when several response decorators registered' do
-          before do
-            described_class.decorate_response with: fake_res_decorator
-            described_class.decorate_response with: fake_res_decorator_two
+          context 'with all routes' do
+            around do |example|
+              described_class.decorate_response with: fake_res_decorator
+              described_class.decorate_response with: fake_res_decorator_two
+              example.run
+              described_class.remove_response_decorators
+            end
+
+            specify 'all of them are called' do
+              expect(response).to eq(decorated_response2)
+            end
           end
 
-          after do
-            described_class.remove_response_decorators
-          end
+          context 'with different route names' do
+            around do |example|
+              described_class.decorate_response :test_route, with: fake_res_decorator
+              described_class.decorate_response :fake_route, with: fake_res_decorator_two
+              example.run
+              described_class.remove_response_decorators
+            end
 
-          specify 'all of them are called' do
-            expect(response).to eq(decorated_response2)
+            specify 'registered for given route should be called' do
+              expect(response).to eq(decorated_response)
+            end
           end
-        end
-
-        context 'when several response decorators registered with different route names' do
-          specify 'registered for given route should be called'
-          specify 'registered with :all symbol should be called'
         end
       end
     end

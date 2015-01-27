@@ -5,7 +5,8 @@ module ApiCaller
     end
 
     def execute(request, route_name)
-      wrap request if [route_name, :all].include? @route_name
+      request = wrap(request) if [route_name, :all].include? @route_name
+      request
     end
 
     private
